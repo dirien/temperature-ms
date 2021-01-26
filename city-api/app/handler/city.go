@@ -36,7 +36,9 @@ func filter(vs []*model.City, f func(string) bool) []*model.City {
 
 // GetcityMember get city members
 func GetCities(config *config.Config, w http.ResponseWriter, r *http.Request) {
-	initCityList()
+	if len(cities) == 0 {
+		initCityList()
+	}
 	query := r.URL.Query().Get("country")
 	if len(query) > 0 {
 		ccities := filter(cities, func(v string) bool {
@@ -46,6 +48,24 @@ func GetCities(config *config.Config, w http.ResponseWriter, r *http.Request) {
 	} else {
 		ResponseWriter(w, http.StatusOK, cities)
 	}
+}
+
+func AddNewCity(config *config.Config, w http.ResponseWriter, r *http.Request) {
+	// Declare a new City struct.
+	var newCity *model.City
+
+	// Try to decode the request body into the struct. If there is an error,
+	// respond to the client with the error message and a 400 status code.
+	err := json.NewDecoder(r.Body).Decode(&newCity)
+	if err != nil {
+		ResponseWriter(w, http.StatusBadRequest, "BAD REQUEST")
+		return
+	}
+
+	newCity.ID = guuid.New().String()
+	// Do something with the City struct...
+	cities = append(cities, newCity)
+	ResponseWriter(w, http.StatusCreated, newCity)
 }
 
 // ResponseWriter will write result in http.ResponseWriter
